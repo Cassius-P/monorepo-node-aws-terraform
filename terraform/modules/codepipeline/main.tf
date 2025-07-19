@@ -129,9 +129,29 @@ resource "aws_codepipeline" "pipeline" {
   name     = "${var.project_name}-${var.environment}-${var.app_name}-pipeline"
   role_arn = aws_iam_role.codepipeline_role.arn
 
+  # Pipeline v2 with queued execution mode
+  pipeline_type = "V2"
+  execution_mode = "QUEUED"
+
   artifact_store {
     location = aws_s3_bucket.pipeline_artifacts.bucket
     type     = "S3"
+  }
+
+  # Git trigger with file path filtering to prevent cross-app triggering
+  trigger {
+    provider_type = "CodeStarSourceConnection"
+    git_configuration {
+      source_action_name = "Source"
+      push {
+        branches {
+          includes = [var.default_branch]
+        }
+        file_paths {
+          includes = ["apps/${var.app_name}/**"]
+        }
+      }
+    }
   }
 
   stage {
