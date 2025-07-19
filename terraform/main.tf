@@ -55,7 +55,6 @@ module "applications" {
   vpc_cidr                 = module.vpc.vpc_cidr_block
   public_subnets           = module.vpc.public_subnets
   private_subnets          = module.vpc.private_subnets
-  instance_type            = var.instance_type
   key_pair_name            = var.key_pair_name
   source_repository_url    = var.source_repository_url
   github_connection_arn    = var.github_connection_arn

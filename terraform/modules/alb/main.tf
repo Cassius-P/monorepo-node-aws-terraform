@@ -13,53 +13,30 @@ resource "aws_lb" "main" {
   })
 }
 
-# Target Group - Blue
-resource "aws_lb_target_group" "blue" {
-  name     = "${var.project_name}-${var.environment}-blue"
-  port     = 3001
+# Target Groups for applications
+resource "aws_lb_target_group" "app" {
+  for_each = var.applications
+  
+  name     = "${var.project_name}-${var.environment}-${each.key}-tg"
+  port     = each.value.port
   protocol = "HTTP"
   vpc_id   = var.vpc_id
 
   health_check {
     enabled             = true
-    healthy_threshold   = 2
-    unhealthy_threshold = 2
-    timeout             = 5
-    interval            = 30
-    path                = "/api/v1/health"
-    matcher             = "200"
+    healthy_threshold   = each.value.health_check.healthy_threshold
+    unhealthy_threshold = each.value.health_check.unhealthy_threshold
+    timeout             = each.value.health_check.timeout
+    interval            = each.value.health_check.interval
+    path                = each.value.health_check.path
+    matcher             = each.value.health_check.matcher
     port                = "traffic-port"
     protocol            = "HTTP"
   }
 
   tags = merge(var.tags, {
-    Name = "${var.project_name}-${var.environment}-blue-tg"
-    Type = "Blue"
-  })
-}
-
-# Target Group - Green
-resource "aws_lb_target_group" "green" {
-  name     = "${var.project_name}-${var.environment}-green"
-  port     = 3001
-  protocol = "HTTP"
-  vpc_id   = var.vpc_id
-
-  health_check {
-    enabled             = true
-    healthy_threshold   = 2
-    unhealthy_threshold = 2
-    timeout             = 5
-    interval            = 30
-    path                = "/api/v1/health"
-    matcher             = "200"
-    port                = "traffic-port"
-    protocol            = "HTTP"
-  }
-
-  tags = merge(var.tags, {
-    Name = "${var.project_name}-${var.environment}-green-tg"
-    Type = "Green"
+    Name = "${var.project_name}-${var.environment}-${each.key}-tg"
+    Application = each.key
   })
 }
 
@@ -69,29 +46,39 @@ resource "aws_lb_listener" "http" {
   port              = "80"
   protocol          = "HTTP"
 
+  # Default action - return 404 for unmatched requests
   default_action {
-    type             = "forward"
-    target_group_arn = aws_lb_target_group.blue.arn
+    type = "fixed-response"
+    
+    fixed_response {
+      content_type = "text/plain"
+      message_body = "Not Found"
+      status_code  = "404"
+    }
   }
 
   tags = var.tags
 }
 
-# ALB Listener Rule for API traffic
-resource "aws_lb_listener_rule" "api" {
+# ALB Listener Rules for applications
+resource "aws_lb_listener_rule" "app" {
+  for_each = var.applications
+  
   listener_arn = aws_lb_listener.http.arn
-  priority     = 100
+  priority     = 100 + index(keys(var.applications), each.key)
 
   action {
     type             = "forward"
-    target_group_arn = aws_lb_target_group.blue.arn
+    target_group_arn = aws_lb_target_group.app[each.key].arn
   }
 
   condition {
     path_pattern {
-      values = ["/api/*"]
+      values = each.value.type == "api" ? ["/api/*"] : ["/*"]
     }
   }
 
-  tags = var.tags
+  tags = merge(var.tags, {
+    Application = each.key
+  })
 }

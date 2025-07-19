@@ -29,9 +29,9 @@ variable "security_groups" {
 }
 
 variable "instance_type" {
-  description = "EC2 instance type"
+  description = "EC2 instance type (deprecated - use app_config.instance_type)"
   type        = string
-  default     = "t3.micro"
+  default     = null
 }
 
 variable "key_pair_name" {
@@ -39,22 +39,23 @@ variable "key_pair_name" {
   type        = string
 }
 
+# These are now passed from app_config.scaling - keeping for backward compatibility
 variable "min_size" {
-  description = "Minimum number of instances in the Auto Scaling Group"
+  description = "Minimum number of instances in the Auto Scaling Group (deprecated - use app_config.scaling)"
   type        = number
-  default     = 1
+  default     = null
 }
 
 variable "max_size" {
-  description = "Maximum number of instances in the Auto Scaling Group"
+  description = "Maximum number of instances in the Auto Scaling Group (deprecated - use app_config.scaling)"
   type        = number
-  default     = 4
+  default     = null
 }
 
 variable "desired_capacity" {
-  description = "Desired number of instances in the Auto Scaling Group"
+  description = "Desired number of instances in the Auto Scaling Group (deprecated - use app_config.scaling)"
   type        = number
-  default     = 2
+  default     = null
 }
 
 variable "target_group_arns" {
@@ -66,14 +67,29 @@ variable "target_group_arns" {
 variable "app_config" {
   description = "Application configuration"
   type = object({
-    name              = string
-    type              = string
-    port              = number
-    path_pattern      = string
-    node_version      = string
-    build_command     = string
-    start_command     = string
-    health_check_path = string
+    name         = string
+    type         = string
+    port         = number
+    path_pattern = string
+    node_version = string
+    build_command = string
+    start_command = string
+    instance_type = string # EC2 instance type per application
+    health_check = object({
+      path                = string
+      interval            = number
+      timeout             = number
+      healthy_threshold   = number
+      unhealthy_threshold = number
+      matcher             = string
+    })
+    scaling = object({
+      min_size                = number
+      max_size                = number
+      desired_capacity        = number
+      scale_up_cpu_threshold  = number
+      scale_down_cpu_threshold = number
+    })
   })
 }
 

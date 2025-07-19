@@ -13,24 +13,14 @@ output "load_balancer_zone_id" {
   value       = aws_lb.main.zone_id
 }
 
-output "target_group_blue_arn" {
-  description = "ARN of the blue target group"
-  value       = aws_lb_target_group.blue.arn
+output "target_group_arns" {
+  description = "Map of application target group ARNs"
+  value       = { for k, v in aws_lb_target_group.app : k => v.arn }
 }
 
-output "target_group_green_arn" {
-  description = "ARN of the green target group"
-  value       = aws_lb_target_group.green.arn
-}
-
-output "target_group_blue_name" {
-  description = "Name of the blue target group"
-  value       = aws_lb_target_group.blue.name
-}
-
-output "target_group_green_name" {
-  description = "Name of the green target group"
-  value       = aws_lb_target_group.green.name
+output "target_group_names" {
+  description = "Map of application target group names"
+  value       = { for k, v in aws_lb_target_group.app : k => v.name }
 }
 
 output "listener_arn" {
