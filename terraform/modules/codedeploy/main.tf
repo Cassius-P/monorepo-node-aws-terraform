@@ -85,6 +85,12 @@ resource "aws_codedeploy_deployment_group" "app" {
   deployment_group_name = "${var.project_name}-${var.environment}-${var.app_name}-deployment-group"
   service_role_arn      = aws_iam_role.codedeploy_role.arn
 
+  # Deployment Style - Blue/Green (not in-place)
+  deployment_style {
+    deployment_type   = "BLUE_GREEN"
+    deployment_option = "WITH_TRAFFIC_CONTROL"
+  }
+
   # Blue/Green Deployment Configuration
   blue_green_deployment_config {
     terminate_blue_instances_on_deployment_success {
