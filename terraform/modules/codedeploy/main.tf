@@ -111,8 +111,8 @@ resource "aws_codedeploy_deployment_group" "app" {
     }
   }
 
-  # Deployment Configuration for Blue/Green with Load Balancer
-  deployment_config_name = "CodeDeployDefault.BlueGreenCanary10Percent5MinutesELB"
+  # Deployment Configuration for EC2/On-Premise Blue/Green
+  deployment_config_name = "CodeDeployDefault.AllAtOnce"
 
   # Auto Rollback Configuration
   auto_rollback_configuration {
