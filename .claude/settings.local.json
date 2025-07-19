@@ -1,0 +1,22 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(mkdir:*)",
+      "Bash(terraform:*)",
+      "Bash(./scripts/setup-parameters.sh:*)",
+      "Bash(grep:*)",
+      "Bash(bash:*)",
+      "Bash(dos2unix:*)",
+      "Bash(cat:*)",
+      "Bash(echo:*)",
+      "Bash(./scripts/setup-parameters.py:*)",
+      "Bash(find:*)",
+      "Bash(aws codedeploy list-deployments:*)",
+      "Bash(aws deploy:*)",
+      "Bash(aws iam get-role:*)",
+      "Bash(aws iam list-attached-role-policies:*)",
+      "Bash(aws iam get-policy-version:*)"
+    ],
+    "deny": []
+  }
+}

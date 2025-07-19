@@ -24,7 +24,19 @@ resource "aws_iam_role_policy_attachment" "codedeploy_policy" {
   policy_arn = "arn:aws:iam::aws:policy/service-role/AWSCodeDeployRole"
 }
 
-# Additional policy for ELB operations
+# Attach AWS managed policy for Auto Scaling
+resource "aws_iam_role_policy_attachment" "codedeploy_autoscaling_policy" {
+  role       = aws_iam_role.codedeploy_role.name
+  policy_arn = "arn:aws:iam::aws:policy/AutoScalingFullAccess"
+}
+
+# Attach AWS managed policy for EC2
+resource "aws_iam_role_policy_attachment" "codedeploy_ec2_policy" {
+  role       = aws_iam_role.codedeploy_role.name
+  policy_arn = "arn:aws:iam::aws:policy/AmazonEC2FullAccess"
+}
+
+# Additional policy for ELB operations only (Auto Scaling and EC2 are covered by AWS managed policies)
 resource "aws_iam_policy" "codedeploy_elb_policy" {
   name = "${var.project_name}-${var.environment}-${var.app_name}-codedeploy-elb-policy"
 
@@ -42,18 +54,6 @@ resource "aws_iam_policy" "codedeploy_elb_policy" {
           "elasticloadbalancing:DescribeTargetHealth",
           "elasticloadbalancing:RegisterTargets",
           "elasticloadbalancing:DeregisterTargets"
-        ]
-        Resource = "*"
-      },
-      {
-        Effect = "Allow"
-        Action = [
-          "autoscaling:CompleteLifecycleAction",
-          "autoscaling:DeleteLifecycleHook",
-          "autoscaling:DescribeLifecycleHooks",
-          "autoscaling:DescribeAutoScalingGroups",
-          "autoscaling:PutLifecycleHook",
-          "autoscaling:RecordLifecycleActionHeartbeat"
         ]
         Resource = "*"
       }
