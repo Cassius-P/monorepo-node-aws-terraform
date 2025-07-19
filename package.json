@@ -1,0 +1,21 @@
+{
+  "name": "app-v2",
+  "private": true,
+  "packageManager": "pnpm@10.12.1",
+  "scripts": {
+    "dev:api": "pnpm --filter api start:dev",
+    "dev:web": "pnpm --filter web dev",
+    "dev:mobile": "pnpm --filter mobile start"
+  },
+  "devDependencies": {
+    "@nestjs/cli": "^11.0.7",
+    "@types/react": "^19.1.8",
+    "turbo": "^2.5.4"
+  },
+  "dependencies": {
+    "@headlessui/react": "^2.2.4",
+    "@heroicons/react": "^2.2.0",
+    "clsx": "^2.1.1",
+    "framer-motion": "^12.23.0"
+  }
+}
