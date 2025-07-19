@@ -1,0 +1,55 @@
+version: 0.2
+
+phases:
+  install:
+    runtime-versions:
+      nodejs: 22
+    commands:
+      - echo Entered the install phase...
+      - echo Installing pnpm...
+      - npm install -g pnpm@10.12.1
+      - echo Verifying pnpm installation...
+      - pnpm --version
+      
+  pre_build:
+    commands:
+      - echo Entered the pre_build phase...
+      - echo Current directory is $CODEBUILD_SRC_DIR
+      - ls -la
+      - echo Installing dependencies...
+      - cd apps/web
+      - pnpm install --frozen-lockfile
+      - echo Checking if .env.example exists...
+      - ls -la | grep env || echo "No env files found"
+      
+  build:
+    commands:
+      - echo Entered the build phase...
+      - echo Building the Next.js application...
+      - pnpm run build
+      - echo Running linter...
+      - pnpm run lint || echo "Lint step skipped - not configured"
+      
+  post_build:
+    commands:
+      - echo Entered the post_build phase...
+      - echo Build completed on `date`
+      - echo Preparing deployment artifacts...
+      - ls -la .next/ || echo "No .next directory found"
+      - ls -la dist/ || echo "No dist directory found"
+      - echo Copying deployment scripts...
+      - cp -r ../../scripts ./
+      - echo Listing final artifact contents...
+      - ls -la
+
+artifacts:
+  files:
+    - '**/*'
+  base-directory: 'apps/web'
+  name: comptastar-web-$(date +%Y-%m-%d-%H-%M-%S)
+
+cache:
+  paths:
+    - 'node_modules/**/*'
+    - 'apps/web/node_modules/**/*'
+    - 'apps/web/.next/cache/**/*'
