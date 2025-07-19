@@ -10,7 +10,7 @@ phases:
       - npm install -g pnpm@10.12.1
       - echo Verifying pnpm installation...
       - pnpm --version
-      
+
   pre_build:
     commands:
       - echo Entered the pre_build phase...
@@ -21,7 +21,7 @@ phases:
       - pnpm install --frozen-lockfile
       - echo Checking if .env.example exists...
       - ls -la | grep env || echo "No env files found"
-      
+
   build:
     commands:
       - echo Entered the build phase...
@@ -29,7 +29,7 @@ phases:
       - pnpm run build
       - echo Running linter...
       - pnpm run lint || echo "Lint step skipped - not configured"
-      
+
   post_build:
     commands:
       - echo Entered the post_build phase...

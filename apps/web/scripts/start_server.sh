@@ -107,15 +107,16 @@ log "Application started successfully"
 
 # Perform health check
 log "Performing application health check..."
-HEALTH_CHECK_URL="http://localhost:$NEXT_PORT"
+HEALTH_CHECK_URL="http://localhost:$NEXT_PORT/api/health"
 MAX_ATTEMPTS=30
 ATTEMPT=1
 
 while [[ $ATTEMPT -le $MAX_ATTEMPTS ]]; do
     log "Health check attempt $ATTEMPT/$MAX_ATTEMPTS..."
     
+    # Check the dedicated health endpoint
     if curl -f -s "$HEALTH_CHECK_URL" > /dev/null 2>&1; then
-        log "Health check passed!"
+        log "Health check passed! API endpoint is responding."
         break
     fi
     
