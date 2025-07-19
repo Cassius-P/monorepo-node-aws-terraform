@@ -111,7 +111,7 @@ locals {
 resource "aws_launch_template" "app" {
   name_prefix   = "${var.project_name}-${var.environment}-${var.app_name}-"
   image_id      = data.aws_ami.amazon_linux.id
-  instance_type = var.instance_type
+  instance_type = coalesce(var.instance_type, var.app_config.instance_type)
   key_name      = var.key_pair_name
 
   vpc_security_group_ids = var.security_groups
@@ -153,9 +153,9 @@ resource "aws_autoscaling_group" "app" {
   health_check_type   = "ELB"
   health_check_grace_period = 300
 
-  min_size         = var.min_size
-  max_size         = var.max_size
-  desired_capacity = var.desired_capacity
+  min_size         = coalesce(var.min_size, var.app_config.scaling.min_size)
+  max_size         = coalesce(var.max_size, var.app_config.scaling.max_size)
+  desired_capacity = coalesce(var.desired_capacity, var.app_config.scaling.desired_capacity)
 
   launch_template {
     id      = aws_launch_template.app.id
@@ -194,6 +194,70 @@ resource "aws_autoscaling_group" "app" {
   lifecycle {
     create_before_destroy = true
   }
+}
+
+# Auto Scaling Policies for CPU-based scaling with CPU percentage in names
+resource "aws_autoscaling_policy" "scale_up" {
+  name                   = "${var.project_name}-${var.environment}-${var.app_name}-scale-up-${var.app_config.scaling.scale_up_cpu_threshold}percent"
+  scaling_adjustment     = 1
+  adjustment_type        = "ChangeInCapacity"
+  cooldown               = 300
+  autoscaling_group_name = aws_autoscaling_group.app.name
+
+  policy_type = "SimpleScaling"
+}
+
+resource "aws_autoscaling_policy" "scale_down" {
+  name                   = "${var.project_name}-${var.environment}-${var.app_name}-scale-down-${var.app_config.scaling.scale_down_cpu_threshold}percent"
+  scaling_adjustment     = -1
+  adjustment_type        = "ChangeInCapacity"
+  cooldown               = 300
+  autoscaling_group_name = aws_autoscaling_group.app.name
+
+  policy_type = "SimpleScaling"
+}
+
+# CloudWatch Alarms for CPU-based scaling with CPU percentage in names
+resource "aws_cloudwatch_metric_alarm" "cpu_high" {
+  alarm_name          = "${var.project_name}-${var.environment}-${var.app_name}-cpu-high-${var.app_config.scaling.scale_up_cpu_threshold}percent"
+  comparison_operator = "GreaterThanThreshold"
+  evaluation_periods  = "2"
+  metric_name         = "CPUUtilization"
+  namespace           = "AWS/EC2"
+  period              = "60"
+  statistic           = "Average"
+  threshold           = var.app_config.scaling.scale_up_cpu_threshold
+  alarm_description   = "This metric monitors EC2 CPU utilization for scale up at ${var.app_config.scaling.scale_up_cpu_threshold}%"
+  alarm_actions       = [aws_autoscaling_policy.scale_up.arn]
+
+  dimensions = {
+    AutoScalingGroupName = aws_autoscaling_group.app.name
+  }
+
+  tags = merge(var.tags, {
+    Application = var.app_name
+  })
+}
+
+resource "aws_cloudwatch_metric_alarm" "cpu_low" {
+  alarm_name          = "${var.project_name}-${var.environment}-${var.app_name}-cpu-low-${var.app_config.scaling.scale_down_cpu_threshold}percent"
+  comparison_operator = "LessThanThreshold"
+  evaluation_periods  = "2"
+  metric_name         = "CPUUtilization"
+  namespace           = "AWS/EC2"
+  period              = "300"
+  statistic           = "Average"
+  threshold           = var.app_config.scaling.scale_down_cpu_threshold
+  alarm_description   = "This metric monitors EC2 CPU utilization for scale down at ${var.app_config.scaling.scale_down_cpu_threshold}%"
+  alarm_actions       = [aws_autoscaling_policy.scale_down.arn]
+
+  dimensions = {
+    AutoScalingGroupName = aws_autoscaling_group.app.name
+  }
+
+  tags = merge(var.tags, {
+    Application = var.app_name
+  })
 }
 
 # CloudWatch Log Group

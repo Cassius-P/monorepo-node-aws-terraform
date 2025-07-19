@@ -13,14 +13,14 @@ output "load_balancer_arn" {
   value       = aws_lb.app.arn
 }
 
-output "target_group_blue_arn" {
-  description = "ARN of the blue target group"
-  value       = aws_lb_target_group.blue.arn
+output "target_group_arn" {
+  description = "ARN of the target group"
+  value       = aws_lb_target_group.app.arn
 }
 
-output "target_group_green_arn" {
-  description = "ARN of the green target group"
-  value       = aws_lb_target_group.green.arn
+output "target_group_name" {
+  description = "Name of the target group"
+  value       = aws_lb_target_group.app.name
 }
 
 output "auto_scaling_group_name" {

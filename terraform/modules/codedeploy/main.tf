@@ -89,7 +89,7 @@ resource "aws_codedeploy_deployment_group" "app" {
   blue_green_deployment_config {
     terminate_blue_instances_on_deployment_success {
       action                         = "TERMINATE"
-      termination_wait_time_in_minutes = 5
+      termination_wait_time_in_minutes = 15
     }
 
     deployment_ready_option {
@@ -107,7 +107,7 @@ resource "aws_codedeploy_deployment_group" "app" {
   # Load Balancer Configuration
   load_balancer_info {
     target_group_info {
-      name = var.target_group_blue_name
+      name = var.target_group_name
     }
   }
 
@@ -143,7 +143,7 @@ resource "aws_cloudwatch_metric_alarm" "deployment_failure" {
   alarm_actions       = []
 
   dimensions = {
-    TargetGroup = var.target_group_blue_name
+    TargetGroup = var.target_group_name
   }
 
   tags = merge(var.tags, {

@@ -6,8 +6,11 @@ locals {
   app_port = var.app_config.port
   app_type = var.app_config.type # "api" or "web"
   
-  # Health check path varies by app type
-  health_check_path = var.app_config.type == "api" ? "/api/v1/health" : "/"
+  # Health check configuration from app config
+  health_check = var.app_config.health_check
+  
+  # Scaling configuration from app config
+  scaling = var.app_config.scaling
   
   # Build environment varies by app type
   build_image = var.app_config.type == "api" ? "aws/codebuild/amazonlinux2-x86_64-standard:5.0" : "aws/codebuild/amazonlinux2-x86_64-standard:5.0"
@@ -109,54 +112,27 @@ resource "aws_security_group" "app" {
   }
 }
 
-# Target Group - Blue
-resource "aws_lb_target_group" "blue" {
-  name     = "${var.project_name}-${var.environment}-${local.app_name}-blue"
+# Target Group for Application Load Balancer
+resource "aws_lb_target_group" "app" {
+  name     = "${var.project_name}-${var.environment}-${local.app_name}-tg"
   port     = local.app_port
   protocol = "HTTP"
   vpc_id   = var.vpc_id
 
   health_check {
     enabled             = true
-    healthy_threshold   = 2
-    unhealthy_threshold = 2
-    timeout             = 5
-    interval            = 30
-    path                = local.health_check_path
-    matcher             = "200"
+    healthy_threshold   = local.health_check.healthy_threshold
+    unhealthy_threshold = local.health_check.unhealthy_threshold
+    timeout             = local.health_check.timeout
+    interval            = local.health_check.interval
+    path                = local.health_check.path
+    matcher             = local.health_check.matcher
     port                = "traffic-port"
     protocol            = "HTTP"
   }
 
   tags = merge(var.tags, {
-    Name        = "${var.project_name}-${var.environment}-${local.app_name}-blue-tg"
-    Type        = "Blue"
-    Application = local.app_name
-  })
-}
-
-# Target Group - Green
-resource "aws_lb_target_group" "green" {
-  name     = "${var.project_name}-${var.environment}-${local.app_name}-green"
-  port     = local.app_port
-  protocol = "HTTP"
-  vpc_id   = var.vpc_id
-
-  health_check {
-    enabled             = true
-    healthy_threshold   = 2
-    unhealthy_threshold = 2
-    timeout             = 5
-    interval            = 30
-    path                = local.health_check_path
-    matcher             = "200"
-    port                = "traffic-port"
-    protocol            = "HTTP"
-  }
-
-  tags = merge(var.tags, {
-    Name        = "${var.project_name}-${var.environment}-${local.app_name}-green-tg"
-    Type        = "Green"
+    Name        = "${var.project_name}-${var.environment}-${local.app_name}-tg"
     Application = local.app_name
   })
 }
@@ -169,7 +145,7 @@ resource "aws_lb_listener" "http" {
 
   default_action {
     type             = "forward"
-    target_group_arn = aws_lb_target_group.blue.arn
+    target_group_arn = aws_lb_target_group.app.arn
   }
 
   tags = merge(var.tags, {
@@ -184,7 +160,7 @@ resource "aws_lb_listener_rule" "app" {
 
   action {
     type             = "forward"
-    target_group_arn = aws_lb_target_group.blue.arn
+    target_group_arn = aws_lb_target_group.app.arn
   }
 
   condition {
@@ -208,9 +184,8 @@ module "ec2" {
   vpc_id           = var.vpc_id
   private_subnets  = var.private_subnets
   security_groups  = [aws_security_group.app.id]
-  instance_type    = var.instance_type
   key_pair_name    = var.key_pair_name
-  target_group_arns = [aws_lb_target_group.blue.arn]
+  target_group_arns = [aws_lb_target_group.app.arn]
   app_config       = var.app_config
   tags             = var.tags
 }
@@ -235,9 +210,7 @@ module "codedeploy" {
   environment                 = var.environment
   app_name                    = local.app_name
   auto_scaling_group_name     = module.ec2.auto_scaling_group_name
-  target_group_blue_name      = aws_lb_target_group.blue.name
-  target_group_green_name     = aws_lb_target_group.green.name
-  load_balancer_listener_arn  = aws_lb_listener.http.arn
+  target_group_name           = aws_lb_target_group.app.name
   tags                        = var.tags
 }
 

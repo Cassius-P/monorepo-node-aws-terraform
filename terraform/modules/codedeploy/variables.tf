@@ -18,18 +18,8 @@ variable "auto_scaling_group_name" {
   type        = string
 }
 
-variable "target_group_blue_name" {
-  description = "Name of the blue target group"
-  type        = string
-}
-
-variable "target_group_green_name" {
-  description = "Name of the green target group"
-  type        = string
-}
-
-variable "load_balancer_listener_arn" {
-  description = "ARN of the load balancer listener"
+variable "target_group_name" {
+  description = "Name of the target group for load balancer"
   type        = string
 }
 
