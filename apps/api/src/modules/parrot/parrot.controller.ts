@@ -1,17 +1,22 @@
-import { Controller, Post, Body } from '@nestjs/common';
+import { Controller, Post, Body } from "@nestjs/common";
 
-@Controller('parrot')
+interface EchoResponse {
+  parrot: unknown;
+  timestamp: string;
+}
+
+@Controller("parrot")
 export class ParrotController {
   @Post()
-  echo(@Body() body: any) {
+  echo(@Body() body: unknown): EchoResponse {
     return {
       parrot: body,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     };
   }
 
-  @Post('raw')
-  echoRaw(@Body() body: any) {
+  @Post("raw")
+  echoRaw(@Body() body: unknown): unknown {
     return body;
   }
 }
