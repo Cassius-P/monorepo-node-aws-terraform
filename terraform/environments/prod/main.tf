@@ -3,7 +3,7 @@
 
 terraform {
   required_version = ">= 1.0"
-  
+
   # Uncomment and configure for remote state management
   # backend "s3" {
   #   bucket = "comptastar-terraform-state"
@@ -17,14 +17,13 @@ module "infrastructure" {
   source = "../../"
 
   # Pass through all variables
-  aws_region                = var.aws_region
-  environment              = var.environment
-  instance_type            = var.instance_type
-  key_pair_name            = var.key_pair_name
-  source_repository_url    = var.source_repository_url
-  github_connection_arn    = var.github_connection_arn
-  default_branch           = var.default_branch
-  applications             = var.applications
+  aws_region            = var.aws_region
+  environment           = var.environment
+  key_pair_name         = var.key_pair_name
+  source_repository_url = var.source_repository_url
+  github_connection_arn = var.github_connection_arn
+  default_branch        = var.default_branch
+  applications          = var.applications
 }
 
 # Output important values
