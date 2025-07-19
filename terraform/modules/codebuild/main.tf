@@ -82,7 +82,9 @@ resource "aws_iam_policy" "codebuild_policy" {
         ]
         Resource = [
           "${aws_s3_bucket.artifacts.arn}",
-          "${aws_s3_bucket.artifacts.arn}/*"
+          "${aws_s3_bucket.artifacts.arn}/*",
+          "arn:aws:s3:::${var.project_name}-${var.environment}-${var.app_name}-pipeline-artifacts-*",
+          "arn:aws:s3:::${var.project_name}-${var.environment}-${var.app_name}-pipeline-artifacts-*/*"
         ]
       },
       {
@@ -90,7 +92,10 @@ resource "aws_iam_policy" "codebuild_policy" {
         Action = [
           "s3:ListBucket"
         ]
-        Resource = aws_s3_bucket.artifacts.arn
+        Resource = [
+          aws_s3_bucket.artifacts.arn,
+          "arn:aws:s3:::${var.project_name}-${var.environment}-${var.app_name}-pipeline-artifacts-*"
+        ]
       }
     ]
   })
