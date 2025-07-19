@@ -27,6 +27,6 @@ async function bootstrap() {
   // Préfixe global pour l'API
   app.setGlobalPrefix('api/v1');
 
-  await app.listen(process.env.PORT ?? 3001, '0.0.0.0');
+  await app.listen(process.env.NEST_PORT ?? 3001, '0.0.0.0');
 }
 bootstrap();

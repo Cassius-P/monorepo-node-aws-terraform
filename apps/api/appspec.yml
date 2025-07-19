@@ -1,0 +1,44 @@
+version: 0.0
+os: linux
+files:
+  - source: /
+    destination: /opt/comptastar-api
+    overwrite: yes
+    file_exists_behavior: OVERWRITE
+permissions:
+  - object: /opt/comptastar-api
+    owner: ec2-user
+    group: ec2-user
+    mode: 755
+    type:
+      - directory
+  - object: /opt/comptastar-api/scripts
+    owner: ec2-user
+    group: ec2-user
+    mode: 755
+    type:
+      - directory
+  - object: /opt/comptastar-api/scripts/*.sh
+    owner: ec2-user
+    group: ec2-user
+    mode: 755
+    pattern: "**/*.sh"
+    type:
+      - file
+hooks:
+  BeforeInstall:
+    - location: scripts/install_dependencies.sh
+      timeout: 300
+      runas: root
+  AfterInstall:
+    - location: scripts/configure_environment.sh
+      timeout: 180
+      runas: ec2-user
+  ApplicationStart:
+    - location: scripts/start_server.sh
+      timeout: 300
+      runas: ec2-user
+  ApplicationStop:
+    - location: scripts/stop_server.sh
+      timeout: 120
+      runas: ec2-user
