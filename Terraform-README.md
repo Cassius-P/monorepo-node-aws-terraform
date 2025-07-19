@@ -38,8 +38,14 @@ Your AWS user/role needs permissions for:
 Before deploying, set up environment variables in AWS Systems Manager Parameter Store:
 
 ```bash
-# Run the parameter setup script
-./scripts/setup-parameters.sh
+# 1. Dry run - see what parameters would be created (recommended first step)
+./scripts/setup-parameters.py -a api
+
+# 2. Create parameters with interactive prompts (shows types and examples)
+./scripts/setup-parameters.py -a api -c
+
+# 3. Create parameters using .env.example values directly (no prompts)
+./scripts/setup-parameters.py -a api -cf
 
 # Or manually create parameters using AWS CLI:
 aws ssm put-parameter \
@@ -79,29 +85,58 @@ github_connection_arn = "arn:aws:codestar-connections:us-east-1:123456789012:con
 # Optional overrides
 aws_region = "us-east-1"
 environment = "prod"
-instance_type = "t3.small"
 
 # Application configuration (optional - defaults provided)
 applications = {
   api = {
-    name              = "api"
-    type              = "api"
-    port              = 3001
-    path_pattern      = "apps/api"
-    node_version      = "22"
-    build_command     = "pnpm run build"
-    start_command     = "pnpm run start:prod"
-    health_check_path = "/api/v1/health"
+    name         = "api"
+    type         = "api"
+    port         = 3001
+    path_pattern = "apps/api"
+    node_version = "22"
+    build_command = "pnpm run build"
+    start_command = "pnpm run start:prod"
+    instance_type = "t3.small"
+    health_check = {
+      path                = "/api/v1/health"
+      interval            = 30
+      timeout             = 5
+      healthy_threshold   = 2
+      unhealthy_threshold = 2
+      matcher             = "200"
+    }
+    scaling = {
+      min_size                = 1
+      max_size                = 5
+      desired_capacity        = 2
+      scale_up_cpu_threshold  = 70
+      scale_down_cpu_threshold = 30
+    }
   }
   web = {
-    name              = "web"
-    type              = "web"
-    port              = 3000
-    path_pattern      = "apps/web"
-    node_version      = "22"
-    build_command     = "pnpm run build"
-    start_command     = "pnpm run start"
-    health_check_path = "/"
+    name         = "web"
+    type         = "web"
+    port         = 3000
+    path_pattern = "apps/web"
+    node_version = "22"
+    build_command = "pnpm run build"
+    start_command = "pnpm run start"
+    instance_type = "t3.micro"
+    health_check = {
+      path                = "/api/health"
+      interval            = 30
+      timeout             = 5
+      healthy_threshold   = 2
+      unhealthy_threshold = 2
+      matcher             = "200"
+    }
+    scaling = {
+      min_size                = 1
+      max_size                = 3
+      desired_capacity        = 1
+      scale_up_cpu_threshold  = 70
+      scale_down_cpu_threshold = 30
+    }
   }
 }
 ```
@@ -137,6 +172,42 @@ aws codestar-connections create-connection \
 ```
 
 The connection will automatically trigger pipelines on pushes to the specified branch for files in the application directories.
+
+## Health Check Configuration
+
+Each application now supports comprehensive health check configuration:
+
+- **`path`**: Health check endpoint (e.g., `/api/v1/health`, `/api/health`)
+- **`interval`**: Time between health checks in seconds (default: 30)
+- **`timeout`**: Health check timeout in seconds (default: 5)
+- **`healthy_threshold`**: Consecutive successes before marking healthy (default: 2)
+- **`unhealthy_threshold`**: Consecutive failures before marking unhealthy (default: 2)
+- **`matcher`**: Expected HTTP response code (default: "200")
+
+## Instance Configuration
+
+Each application can have its own EC2 instance type:
+
+- **`instance_type`**: EC2 instance type per application (e.g., "t3.micro", "t3.small", "t3.medium")
+- **Recommendations**:
+  - **API applications**: `t3.small` or larger (more CPU/memory for backend processing)
+  - **Web applications**: `t3.micro` or `t3.small` (lighter frontend serving)
+  - **Production**: Consider `t3.medium` or larger for high-traffic applications
+
+## Auto Scaling Configuration
+
+CPU-based auto scaling is configured per application:
+
+- **`min_size`**: Minimum number of instances (default: 1)
+- **`max_size`**: Maximum number of instances (API: 5, Web: 3)
+- **`desired_capacity`**: Target number of instances (API: 2, Web: 1)
+- **`scale_up_cpu_threshold`**: CPU percentage to scale up (default: 70%)
+- **`scale_down_cpu_threshold`**: CPU percentage to scale down (default: 30%)
+
+### Auto Scaling Behavior:
+- **Scale Up**: Triggered when average CPU > 70% for 2 consecutive 1-minute periods
+- **Scale Down**: Triggered when average CPU < 30% for 2 consecutive 5-minute periods
+- **Cooldown**: 5 minutes between scaling actions to prevent thrashing
 
 ## Managing Applications
 
