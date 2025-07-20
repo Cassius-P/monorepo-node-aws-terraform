@@ -90,6 +90,9 @@ log "AWS Systems Manager access confirmed"
 # First, validate that all required parameters exist (only if .env.example exists)
 if [[ "$SKIP_VALIDATION" == "false" ]]; then
     log "Validating environment parameters..."
+    log "Looking for .env.example in: $(pwd)/.env.example"
+    ls -la .env.example 2>/dev/null && log "Found .env.example file for validation" || log "Cannot access .env.example file"
+    
     if ! ./scripts/env-manager.sh -a "$APP_NAME" -e "$ENVIRONMENT" -v; then
         log "ERROR: Environment validation failed. Some required parameters are missing."
         log "Please ensure all parameters are created in AWS Systems Manager Parameter Store"

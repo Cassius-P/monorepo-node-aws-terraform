@@ -298,11 +298,25 @@ main() {
     
     # Set default output file if not specified
     if [[ -z "$output_file" && "$format" == "env-file" ]]; then
-        output_file="$PROJECT_ROOT/apps/$app_name/.env"
+        # Check if we're in deployment context (app directory) or monorepo context
+        if [[ -f "$PROJECT_ROOT/.env.example" ]]; then
+            # Deployment context: .env file goes in the app root
+            output_file="$PROJECT_ROOT/.env"
+        else
+            # Monorepo context: .env file goes in apps/$app_name/
+            output_file="$PROJECT_ROOT/apps/$app_name/.env"
+        fi
     fi
     
     # Find .env.example file
-    local env_example_file="$PROJECT_ROOT/apps/$app_name/.env.example"
+    # Check if we're in deployment context (app directory) or monorepo context
+    if [[ -f "$PROJECT_ROOT/.env.example" ]]; then
+        # Deployment context: .env.example is in the app root
+        local env_example_file="$PROJECT_ROOT/.env.example"
+    else
+        # Monorepo context: .env.example is in apps/$app_name/
+        local env_example_file="$PROJECT_ROOT/apps/$app_name/.env.example"
+    fi
     
     if [[ ! -f "$env_example_file" ]]; then
         log_error ".env.example file not found: $env_example_file"

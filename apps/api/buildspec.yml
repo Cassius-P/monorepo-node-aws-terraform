@@ -41,12 +41,15 @@ phases:
       - ls -la dist/
       - echo Copying deployment scripts...
       - cp -r ../../scripts ./
+      - echo Ensuring .env.example is included...
+      - ls -la .env.example || echo "Warning: .env.example not found"
       - echo Listing final artifact contents...
       - ls -la
 
 artifacts:
   files:
     - '**/*'
+    - '.env.example'
   base-directory: 'apps/api'
   name: comptastar-api-$(date +%Y-%m-%d-%H-%M-%S)
 
