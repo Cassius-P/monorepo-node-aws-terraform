@@ -80,6 +80,18 @@ variable "app_config" {
   })
 }
 
+variable "ssl_certificate_arn" {
+  description = "ARN of SSL certificate for HTTPS listener (optional, creates self-signed if not provided)"
+  type        = string
+  default     = ""
+}
+
+variable "enable_https" {
+  description = "Enable HTTPS listener"
+  type        = bool
+  default     = true
+}
+
 variable "tags" {
   description = "A map of tags to assign to the resource"
   type        = map(string)

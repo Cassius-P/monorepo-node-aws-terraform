@@ -33,6 +33,18 @@ variable "default_branch" {
   default     = "main"
 }
 
+variable "ssl_certificate_arn" {
+  description = "ARN of SSL certificate for HTTPS listeners (optional, creates self-signed if not provided)"
+  type        = string
+  default     = ""
+}
+
+variable "enable_https" {
+  description = "Enable HTTPS listeners for all applications"
+  type        = bool
+  default     = true
+}
+
 variable "applications" {
   description = "Map of applications with their configurations"
   type = map(object({

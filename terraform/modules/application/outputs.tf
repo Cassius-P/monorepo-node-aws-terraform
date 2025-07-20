@@ -47,3 +47,21 @@ output "github_connection_arn" {
   description = "ARN of the CodeStar connection to GitHub"
   value       = module.codepipeline.github_connection_arn
 }
+
+output "https_listener_arn" {
+  description = "ARN of the HTTPS listener (if HTTPS is enabled)"
+  value       = var.enable_https ? aws_lb_listener.https[0].arn : null
+}
+
+output "ssl_certificate_arn" {
+  description = "ARN of the SSL certificate used"
+  value       = var.enable_https ? (var.ssl_certificate_arn != "" ? var.ssl_certificate_arn : aws_acm_certificate.alb_cert[0].arn) : null
+}
+
+output "load_balancer_urls" {
+  description = "Available URLs for the load balancer"
+  value = {
+    http  = "http://${aws_lb.app.dns_name}"
+    https = var.enable_https ? "https://${aws_lb.app.dns_name}" : null
+  }
+}

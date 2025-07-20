@@ -10,6 +10,9 @@ output "applications" {
     for app_name, app in module.applications : app_name => {
       load_balancer_dns        = app.load_balancer_dns
       load_balancer_zone_id    = app.load_balancer_zone_id
+      load_balancer_urls       = app.load_balancer_urls
+      https_listener_arn       = app.https_listener_arn
+      ssl_certificate_arn      = app.ssl_certificate_arn
       codepipeline_name        = app.codepipeline_name
       codebuild_project_name   = app.codebuild_project_name
       codedeploy_application_name = app.codedeploy_application_name
@@ -40,5 +43,13 @@ output "pipeline_names" {
   description = "CodePipeline names for all applications"
   value = {
     for app_name, app in module.applications : app_name => app.codepipeline_name
+  }
+}
+
+# Application URLs (HTTP and HTTPS)
+output "application_urls" {
+  description = "Application URLs for all applications"
+  value = {
+    for app_name, app in module.applications : app_name => app.load_balancer_urls
   }
 }
