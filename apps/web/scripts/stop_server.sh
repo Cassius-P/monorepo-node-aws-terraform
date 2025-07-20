@@ -5,6 +5,12 @@
 
 set -e
 
+# For first deployment, there might be nothing to stop
+if [[ ! -d "/opt/comptastar-web" ]]; then
+    echo "[$(date '+%Y-%m-%d %H:%M:%S')] First deployment detected, no application to stop" | tee -a "/var/log/codedeploy-stop.log"
+    exit 0
+fi
+
 LOG_FILE="/var/log/codedeploy-stop.log"
 APP_DIR="/opt/comptastar-web"
 

@@ -5,6 +5,12 @@
 
 set -e
 
+# For first deployment, there might be nothing to stop
+if [[ ! -d "/opt/comptastar-api" ]]; then
+    log "First deployment detected, no application to stop"
+    exit 0
+fi
+
 LOG_FILE="/var/log/codedeploy-stop.log"
 APP_DIR="/opt/comptastar-api"
 
