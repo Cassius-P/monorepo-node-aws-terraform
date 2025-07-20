@@ -55,7 +55,7 @@ log "AWS credentials validated"
 
 # Test SSM access
 log "Testing AWS Systems Manager access..."
-if ! aws ssm describe-parameters --max-items 1 > /dev/null 2>&1; then
+if ! aws ssm get-parameters-by-path --path "/$ENVIRONMENT/web" --max-items 1 > /dev/null 2>&1; then
     log "ERROR: Cannot access AWS Systems Manager. Check IAM permissions."
     exit 1
 fi
