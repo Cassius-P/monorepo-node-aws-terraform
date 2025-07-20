@@ -104,16 +104,16 @@ resource "aws_codedeploy_deployment_group" "app" {
   # Deployment Configuration for EC2/On-Premise Blue/Green
   deployment_config_name = "CodeDeployDefault.AllAtOnce"
 
-  # Auto Rollback Configuration
+  # Auto Rollback Configuration - DISABLED
   auto_rollback_configuration {
-    enabled = true
-    events  = ["DEPLOYMENT_FAILURE", "DEPLOYMENT_STOP_ON_ALARM"]
+    enabled = false
+    events  = []
   }
 
-  # Alarm Configuration for Auto Rollback
+  # Alarm Configuration for Auto Rollback - DISABLED
   alarm_configuration {
-    enabled = true
-    alarms  = [aws_cloudwatch_metric_alarm.deployment_failure.alarm_name]
+    enabled = false
+    alarms  = []
   }
 
   tags = var.tags

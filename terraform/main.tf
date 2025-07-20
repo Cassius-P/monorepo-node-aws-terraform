@@ -55,6 +55,7 @@ module "applications" {
 
   project_name             = local.project_name
   environment              = local.environment
+  aws_region               = var.aws_region
   vpc_id                   = module.vpc.vpc_id
   vpc_cidr                 = module.vpc.vpc_cidr_block
   public_subnets           = module.vpc.public_subnets

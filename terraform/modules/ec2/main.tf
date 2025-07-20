@@ -143,6 +143,7 @@ locals {
     project_name = var.project_name
     environment  = var.environment
     app_name     = var.app_name
+    aws_region   = var.aws_region
   }))
 }
 

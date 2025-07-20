@@ -259,6 +259,7 @@ module "ec2" {
   project_name     = var.project_name
   environment      = var.environment
   app_name         = local.app_name
+  aws_region       = var.aws_region
   vpc_id           = var.vpc_id
   private_subnets  = var.private_subnets
   security_groups  = [aws_security_group.app.id]

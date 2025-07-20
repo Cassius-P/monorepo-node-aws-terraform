@@ -13,6 +13,11 @@ variable "app_name" {
   type        = string
 }
 
+variable "aws_region" {
+  description = "AWS region"
+  type        = string
+}
+
 variable "vpc_id" {
   description = "VPC ID"
   type        = string
