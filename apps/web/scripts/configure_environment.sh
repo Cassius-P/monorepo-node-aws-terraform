@@ -10,4 +10,10 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 # Call the generic script with Web parameters (.env.local for Next.js)
 # The generic script will be copied to the scripts directory during build
-"$(dirname "$SCRIPT_DIR")/scripts/configure_environment_generic.sh" web .env.local
+GENERIC_SCRIPT="$(dirname "$SCRIPT_DIR")/scripts/configure_environment_generic.sh"
+
+# Ensure the generic script is executable
+chmod +x "$GENERIC_SCRIPT"
+
+# Call the generic script
+"$GENERIC_SCRIPT" web .env.local
