@@ -9,9 +9,13 @@ LOG_FILE="/var/log/codedeploy-configure.log"
 APP_DIR="/opt/comptastar-web"
 ENV_FILE="$APP_DIR/.env.local"
 
+# Create log file with proper permissions if it doesn't exist
+touch "$LOG_FILE" 2>/dev/null || LOG_FILE="/tmp/codedeploy-configure.log"
+chmod 666 "$LOG_FILE" 2>/dev/null || true
+
 # Logging function
 log() {
-    echo "[$(date '+%Y-%m-%d %H:%M:%S')] $1" | tee -a "$LOG_FILE"
+    echo "[$(date '+%Y-%m-%d %H:%M:%S')] $1" | tee -a "$LOG_FILE" 2>/dev/null || echo "[$(date '+%Y-%m-%d %H:%M:%S')] $1"
 }
 
 log "Starting environment configuration for Web app..."

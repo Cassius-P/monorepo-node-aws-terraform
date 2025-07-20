@@ -7,9 +7,13 @@ set -e
 
 LOG_FILE="/var/log/codedeploy-install.log"
 
+# Create log file with proper permissions if it doesn't exist
+touch "$LOG_FILE" 2>/dev/null || LOG_FILE="/tmp/codedeploy-install.log"
+chmod 666 "$LOG_FILE" 2>/dev/null || true
+
 # Logging function
 log() {
-    echo "[$(date '+%Y-%m-%d %H:%M:%S')] $1" | tee -a "$LOG_FILE"
+    echo "[$(date '+%Y-%m-%d %H:%M:%S')] $1" | tee -a "$LOG_FILE" 2>/dev/null || echo "[$(date '+%Y-%m-%d %H:%M:%S')] $1"
 }
 
 log "Starting dependency installation for Web app..."
