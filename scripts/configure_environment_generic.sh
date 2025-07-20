@@ -35,6 +35,13 @@ log "Starting environment configuration for app: $APP_NAME"
 # Change to application directory
 cd "$APP_DIR"
 
+# Debug: Show current directory and contents
+log "Current working directory: $(pwd)"
+log "Directory contents:"
+ls -la | while read -r line; do
+    log "  $line"
+done
+
 # Ensure we have the env-manager script
 if [[ ! -f "scripts/env-manager.sh" ]]; then
     log "ERROR: env-manager.sh script not found in $APP_DIR/scripts/"
@@ -46,11 +53,14 @@ chmod +x scripts/env-manager.sh
 
 # Check if .env.example exists
 if [[ ! -f ".env.example" ]]; then
-    log "ERROR: .env.example file not found in $APP_DIR"
-    exit 1
+    log "WARNING: .env.example file not found in $APP_DIR"
+    log "Skipping env-manager validation and proceeding with direct parameter fetch"
+    # Skip to direct parameter generation without validation
+    SKIP_VALIDATION=true
+else
+    log "Found .env.example file"
+    SKIP_VALIDATION=false
 fi
-
-log "Found .env.example file"
 
 # Get environment from EC2 tags or use default
 ENVIRONMENT=${CODEDEPLOY_DEPLOYMENT_GROUP_NAME:-prod}
@@ -77,21 +87,45 @@ fi
 
 log "AWS Systems Manager access confirmed"
 
-# First, validate that all required parameters exist
-log "Validating environment parameters..."
-if ! ./scripts/env-manager.sh -a "$APP_NAME" -e "$ENVIRONMENT" -v; then
-    log "ERROR: Environment validation failed. Some required parameters are missing."
-    log "Please ensure all parameters are created in AWS Systems Manager Parameter Store"
-    exit 1
+# First, validate that all required parameters exist (only if .env.example exists)
+if [[ "$SKIP_VALIDATION" == "false" ]]; then
+    log "Validating environment parameters..."
+    if ! ./scripts/env-manager.sh -a "$APP_NAME" -e "$ENVIRONMENT" -v; then
+        log "ERROR: Environment validation failed. Some required parameters are missing."
+        log "Please ensure all parameters are created in AWS Systems Manager Parameter Store"
+        exit 1
+    fi
+    log "Environment validation passed"
+else
+    log "Skipping parameter validation due to missing .env.example file"
 fi
-
-log "Environment validation passed"
 
 # Generate .env file from AWS Systems Manager
 log "Generating $ENV_FILE_NAME file from AWS Systems Manager..."
-if ! ./scripts/env-manager.sh -a "$APP_NAME" -e "$ENVIRONMENT" -o "$ENV_FILE"; then
-    log "ERROR: Failed to generate $ENV_FILE_NAME file"
-    exit 1
+if [[ "$SKIP_VALIDATION" == "false" ]]; then
+    # Use env-manager.sh when .env.example is available
+    if ! ./scripts/env-manager.sh -a "$APP_NAME" -e "$ENVIRONMENT" -o "$ENV_FILE"; then
+        log "ERROR: Failed to generate $ENV_FILE_NAME file using env-manager.sh"
+        exit 1
+    fi
+else
+    # Direct AWS SSM parameter fetch when .env.example is missing
+    log "Using direct AWS SSM parameter fetch..."
+    aws ssm get-parameters-by-path \
+        --path "/$ENVIRONMENT/$APP_NAME/" \
+        --recursive \
+        --with-decryption \
+        --query 'Parameters[*].[Name,Value]' \
+        --output text | while read -r name value; do
+        # Extract parameter name (remove path prefix)
+        param_name="${name##*/}"
+        echo "${param_name}=${value}" >> "$ENV_FILE"
+    done
+    
+    if [[ ! -s "$ENV_FILE" ]]; then
+        log "ERROR: No parameters found for /$ENVIRONMENT/$APP_NAME/"
+        exit 1
+    fi
 fi
 
 log "Successfully generated $ENV_FILE_NAME file"
