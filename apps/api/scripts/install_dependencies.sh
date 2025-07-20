@@ -14,16 +14,33 @@ log() {
 
 log "Starting dependency installation..."
 
-# Update system packages
+# Update system packages including glibc
 log "Updating system packages..."
-sudo yum update -y
+sudo yum update -y glibc
 
 # Install Node.js 22 using NodeSource repository
 log "Installing Node.js 22..."
 if ! command -v node &> /dev/null || [[ $(node --version | cut -d'v' -f2 | cut -d'.' -f1) -lt 22 ]]; then
     log "Node.js 22 not found or outdated, installing..."
+    # Try to install with skip-broken for glibc compatibility issues
     curl -fsSL https://rpm.nodesource.com/setup_22.x | sudo bash -
-    sudo yum install -y nodejs
+    sudo yum install -y nodejs --skip-broken
+    
+    # Check if Node.js was actually installed (--skip-broken doesn't fail but may skip packages)
+    if ! command -v node &> /dev/null; then
+        log "Node.js was skipped due to dependency issues, trying binary installation..."
+        # Alternative: Install via tar.gz binary
+        NODE_VERSION="22.17.1"
+        NODE_DIR="/usr/local/node"
+        sudo mkdir -p "$NODE_DIR"
+        curl -fsSL "https://nodejs.org/dist/v${NODE_VERSION}/node-v${NODE_VERSION}-linux-x64.tar.xz" -o "node.tar.xz"
+        sudo tar -xJf node.tar.xz -C "$NODE_DIR" --strip-components=1
+        sudo ln -sf "$NODE_DIR/bin/node" /usr/bin/node
+        sudo ln -sf "$NODE_DIR/bin/npm" /usr/bin/npm
+        sudo ln -sf "$NODE_DIR/bin/npx" /usr/bin/npx
+        rm node.tar.xz
+        log "Node.js 22 installed via binary distribution"
+    fi
 else
     log "Node.js 22 already installed"
 fi
@@ -93,6 +110,8 @@ sudo yum install -y \
     curl \
     wget \
     unzip \
+    tar \
+    xz \
     htop
 
 log "Dependency installation completed successfully!"

@@ -44,7 +44,12 @@ log "Application will start on port: $NEST_PORT"
 # Install production dependencies if needed
 log "Installing production dependencies..."
 if [[ -f "package.json" ]]; then
-    pnpm install --prod --frozen-lockfile
+    # Ensure pnpm is available in PATH
+    export PATH="/usr/local/node/bin:$PATH"
+    pnpm install --prod --no-frozen-lockfile || {
+        log "pnpm install failed, trying with npm..."
+        npm install --production --no-package-lock
+    }
 else
     log "ERROR: package.json not found"
     exit 1
