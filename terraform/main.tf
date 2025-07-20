@@ -6,6 +6,10 @@ terraform {
       source  = "hashicorp/aws"
       version = "~> 5.0"
     }
+    tls = {
+      source  = "hashicorp/tls"
+      version = "~> 4.0"
+    }
   }
 }
 
@@ -60,6 +64,8 @@ module "applications" {
   github_connection_arn    = var.github_connection_arn
   default_branch           = var.default_branch
   app_config               = each.value
+  ssl_certificate_arn      = var.ssl_certificate_arn
+  enable_https             = var.enable_https
   tags                     = local.common_tags
 
   depends_on = [module.vpc]

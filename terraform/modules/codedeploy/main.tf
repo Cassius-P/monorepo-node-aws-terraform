@@ -24,36 +24,20 @@ resource "aws_iam_role_policy_attachment" "codedeploy_policy" {
   policy_arn = "arn:aws:iam::aws:policy/service-role/AWSCodeDeployRole"
 }
 
-# Attach AWS managed policy for Auto Scaling
-resource "aws_iam_role_policy_attachment" "codedeploy_autoscaling_policy" {
-  role       = aws_iam_role.codedeploy_role.name
-  policy_arn = "arn:aws:iam::aws:policy/AutoScalingFullAccess"
-}
-
-# Attach AWS managed policy for EC2
-resource "aws_iam_role_policy_attachment" "codedeploy_ec2_policy" {
-  role       = aws_iam_role.codedeploy_role.name
-  policy_arn = "arn:aws:iam::aws:policy/AmazonEC2FullAccess"
-}
-
-# Additional policy for ELB operations only (Auto Scaling and EC2 are covered by AWS managed policies)
-resource "aws_iam_policy" "codedeploy_elb_policy" {
-  name = "${var.project_name}-${var.environment}-${var.app_name}-codedeploy-elb-policy"
+# Custom policy for EC2 and PassRole permissions
+resource "aws_iam_policy" "codedeploy_custom_policy" {
+  name = "${var.project_name}-${var.environment}-${var.app_name}-codedeploy-custom-policy"
 
   policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
       {
+        Sid = "VisualEditor0"
         Effect = "Allow"
         Action = [
-          "elasticloadbalancing:DescribeTargetGroups",
-          "elasticloadbalancing:DescribeListeners",
-          "elasticloadbalancing:ModifyListener",
-          "elasticloadbalancing:DescribeRules",
-          "elasticloadbalancing:ModifyRule",
-          "elasticloadbalancing:DescribeTargetHealth",
-          "elasticloadbalancing:RegisterTargets",
-          "elasticloadbalancing:DeregisterTargets"
+          "iam:PassRole",
+          "ec2:CreateTags",
+          "ec2:RunInstances"
         ]
         Resource = "*"
       }
@@ -63,10 +47,10 @@ resource "aws_iam_policy" "codedeploy_elb_policy" {
   tags = var.tags
 }
 
-# Attach ELB policy to role
-resource "aws_iam_role_policy_attachment" "codedeploy_elb_policy_attachment" {
+# Attach custom policy to role
+resource "aws_iam_role_policy_attachment" "codedeploy_custom_policy_attachment" {
   role       = aws_iam_role.codedeploy_role.name
-  policy_arn = aws_iam_policy.codedeploy_elb_policy.arn
+  policy_arn = aws_iam_policy.codedeploy_custom_policy.arn
 }
 
 # CodeDeploy Application

@@ -1,11 +1,11 @@
-# Data source for the latest Amazon Linux 2 AMI
+# Data source for the latest Amazon Linux 2023 AMI
 data "aws_ami" "amazon_linux" {
   most_recent = true
   owners      = ["amazon"]
 
   filter {
     name   = "name"
-    values = ["amzn2-ami-hvm-*-x86_64-gp2"]
+    values = ["al2023-ami-*-x86_64"]
   }
 
   filter {
@@ -88,6 +88,45 @@ resource "aws_iam_role_policy_attachment" "ssm_managed_instance" {
 resource "aws_iam_role_policy_attachment" "cloudwatch_agent" {
   role       = aws_iam_role.ec2_role.name
   policy_arn = "arn:aws:iam::aws:policy/CloudWatchAgentServerPolicy"
+}
+
+# IAM Policy for S3 access to CodeDeploy artifacts
+resource "aws_iam_policy" "s3_codedeploy_policy" {
+  name        = "${var.project_name}-${var.environment}-${var.app_name}-s3-codedeploy-policy"
+  description = "Policy for accessing S3 CodeDeploy artifacts for ${var.app_name}"
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "s3:GetObject",
+          "s3:GetObjectVersion"
+        ]
+        Resource = [
+          "arn:aws:s3:::${var.project_name}-${var.environment}-${var.app_name}-pipeline-artifacts-*/*"
+        ]
+      },
+      {
+        Effect = "Allow"
+        Action = [
+          "s3:ListBucket"
+        ]
+        Resource = [
+          "arn:aws:s3:::${var.project_name}-${var.environment}-${var.app_name}-pipeline-artifacts-*"
+        ]
+      }
+    ]
+  })
+
+  tags = var.tags
+}
+
+# Attach S3 CodeDeploy policy to role
+resource "aws_iam_role_policy_attachment" "s3_codedeploy_policy_attachment" {
+  role       = aws_iam_role.ec2_role.name
+  policy_arn = aws_iam_policy.s3_codedeploy_policy.arn
 }
 
 # IAM Instance Profile

@@ -137,7 +137,43 @@ resource "aws_lb_target_group" "app" {
   })
 }
 
-# ALB Listener - HTTP
+# Self-signed SSL certificate for HTTPS (when no ACM certificate is provided)
+resource "tls_private_key" "alb_private_key" {
+  count     = var.enable_https && var.ssl_certificate_arn == "" ? 1 : 0
+  algorithm = "RSA"
+  rsa_bits  = 2048
+}
+
+resource "tls_self_signed_cert" "alb_cert" {
+  count           = var.enable_https && var.ssl_certificate_arn == "" ? 1 : 0
+  private_key_pem = tls_private_key.alb_private_key[0].private_key_pem
+
+  subject {
+    common_name  = "*.${var.project_name}-${var.environment}.local"
+    organization = "ComptaStar"
+  }
+
+  validity_period_hours = 8760 # 1 year
+
+  allowed_uses = [
+    "key_encipherment",
+    "digital_signature",
+    "server_auth",
+  ]
+}
+
+resource "aws_acm_certificate" "alb_cert" {
+  count            = var.enable_https && var.ssl_certificate_arn == "" ? 1 : 0
+  private_key      = tls_private_key.alb_private_key[0].private_key_pem
+  certificate_body = tls_self_signed_cert.alb_cert[0].cert_pem
+
+  tags = merge(var.tags, {
+    Name        = "${var.project_name}-${var.environment}-${local.app_name}-cert"
+    Application = local.app_name
+  })
+}
+
+# ALB Listener - HTTP (always forward to target group)
 resource "aws_lb_listener" "http" {
   load_balancer_arn = aws_lb.app.arn
   port              = "80"
@@ -153,9 +189,51 @@ resource "aws_lb_listener" "http" {
   })
 }
 
-# ALB Listener Rule for application traffic
-resource "aws_lb_listener_rule" "app" {
+# ALB Listener - HTTPS (always forward to target group when enabled)
+resource "aws_lb_listener" "https" {
+  count             = var.enable_https ? 1 : 0
+  load_balancer_arn = aws_lb.app.arn
+  port              = "443"
+  protocol          = "HTTPS"
+  ssl_policy        = "ELBSecurityPolicy-TLS-1-2-2017-01"
+  certificate_arn   = var.ssl_certificate_arn != "" ? var.ssl_certificate_arn : aws_acm_certificate.alb_cert[0].arn
+
+  default_action {
+    type             = "forward"
+    target_group_arn = aws_lb_target_group.app.arn
+  }
+
+  tags = merge(var.tags, {
+    Application = local.app_name
+  })
+}
+
+# ALB Listener Rule for application traffic (HTTP)
+resource "aws_lb_listener_rule" "app_http" {
+  count        = var.enable_https ? 0 : 1
   listener_arn = aws_lb_listener.http.arn
+  priority     = 100
+
+  action {
+    type             = "forward"
+    target_group_arn = aws_lb_target_group.app.arn
+  }
+
+  condition {
+    path_pattern {
+      values = var.app_config.type == "api" ? ["/api/*"] : ["/*"]
+    }
+  }
+
+  tags = merge(var.tags, {
+    Application = local.app_name
+  })
+}
+
+# ALB Listener Rule for application traffic (HTTPS)
+resource "aws_lb_listener_rule" "app_https" {
+  count        = var.enable_https ? 1 : 0
+  listener_arn = aws_lb_listener.https[0].arn
   priority     = 100
 
   action {
