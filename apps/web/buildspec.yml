@@ -40,6 +40,7 @@ phases:
       - ls -la dist/ || echo "No dist directory found"
       - echo Copying deployment scripts...
       - cp -r ../../scripts ./
+      - cp -r ../../server-scripts ./
       - echo Listing final artifact contents...
       - ls -la
 

@@ -5,7 +5,7 @@ files:
     destination: /opt/comptastar-web
     overwrite: yes
     file_exists_behavior: OVERWRITE
-  - source: ../server-scripts/
+  - source: ./server-scripts/
     destination: /opt/server-scripts
     overwrite: yes
     file_exists_behavior: OVERWRITE
