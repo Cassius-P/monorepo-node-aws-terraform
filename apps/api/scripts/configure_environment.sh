@@ -5,5 +5,9 @@
 
 set -e
 
-# Call the generic script with API parameters
-/opt/server-scripts/configure_environment.sh api
+# Get the directory where this script is located
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+# Call the generic script with API parameters  
+# The generic script will be copied to the scripts directory during build
+"$(dirname "$SCRIPT_DIR")/scripts/configure_environment_generic.sh" api
