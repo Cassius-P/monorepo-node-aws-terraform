@@ -15,7 +15,18 @@
       "Bash(aws deploy:*)",
       "Bash(aws iam get-role:*)",
       "Bash(aws iam list-attached-role-policies:*)",
-      "Bash(aws iam get-policy-version:*)"
+      "Bash(aws iam get-policy-version:*)",
+      "Bash(docker build:*)",
+      "Bash(docker run:*)",
+      "Bash(ls:*)",
+      "Bash(aws ec2 describe-instances:*)",
+      "Bash(aws ssm send-command:*)",
+      "Bash(aws s3 rm:*)",
+      "Bash(aws s3 rb:*)",
+      "Bash(aws ssm get-command-invocation:*)",
+      "Bash(aws autoscaling start-instance-refresh:*)",
+      "Bash(aws autoscaling:*)",
+      "Bash(aws ssm get-parameters-by-path:*)"
     ],
     "deny": []
   }
